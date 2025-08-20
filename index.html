@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Site Discreto</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f4f4f4;
+    }
+    .container {
+      text-align: center;
+    }
+    button {
+      background-color: #28a745;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    .error {
+      color: red;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button onclick="captureNumber()">Clique Aqui</button>
+    <p id="errorMessage" class="error"></p>
+  </div>
+
+  <script>
+    // Configurações do GitHub
+    const GITHUB_TOKEN = 'SEU_TOKEN_AQUI'; // Substitua pelo seu token de acesso pessoal
+    const REPO_OWNER = 'SEU_USUARIO'; // Substitua pelo seu nome de usuário do GitHub
+    const REPO_NAME = 'SEU_REPOSITORIO'; // Substitua pelo nome do seu repositório
+    const FILE_PATH = 'numbers.json'; // Arquivo onde os números serão salvos
+    const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+
+    async function captureNumber() {
+      const errorMessage = document.getElementById('errorMessage');
+      // Captura o número de forma discreta (exemplo: via prompt, substitua conforme necessário)
+      const number = prompt('Digite seu número de WhatsApp (ex: +5511999999999)', '');
+      if (!number) {
+        errorMessage.textContent = 'Nenhum número fornecido.';
+        return;
+      }
+
+      // Validação do número
+      const whatsappRegex = /^\+\d{10,15}$/;
+      if (!whatsappRegex.test(number)) {
+        errorMessage.textContent = 'Número inválido. Use o formato +5511999999999.';
+        return;
+      }
+
+      errorMessage.textContent = '';
+
+      try {
+        // Recupera o arquivo numbers.json existente
+        let numbers = [];
+        let sha = null;
+        try {
+          const response = await fetch(API_URL, {
+            headers: {
+              'Authorization': `Bearer ${GITHUB_TOKEN}`,
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            numbers = JSON.parse(atob(data.content));
+            sha = data.sha; // SHA necessário para atualizar o arquivo
+          }
+        } catch (e) {
+          // Se o arquivo não existe, será criado
+          console.log('Arquivo não encontrado, será criado um novo.');
+        }
+
+        // Adiciona o número se não estiver na lista
+        if (!numbers.includes(number)) {
+          numbers.push(number);
+        } else {
+          errorMessage.textContent = 'Número já registrado.';
+          return;
+        }
+
+        // Envia o arquivo atualizado para o GitHub
+        const content = btoa(JSON.stringify(numbers, null, 2));
+        const payload = {
+          message: `Adiciona número ${number}`,
+          content: content,
+          sha: sha // Inclui SHA se o arquivo já existe
+        };
+
+        const updateResponse = await fetch(API_URL, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${GITHUB_TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (updateResponse.ok) {
+          alert('Número salvo com sucesso!');
+        } else {
+          errorMessage.textContent = 'Erro ao salvar o número.';
+        }
+      } catch (error) {
+        errorMessage.textContent = 'Erro ao conectar com o GitHub.';
+        console.error(error);
+      }
+    }
+  </script>
+</body>
+</html>
