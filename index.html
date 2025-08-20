@@ -16,6 +16,17 @@
     }
     .container {
       text-align: center;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    input[type="text"] {
+      width: 80%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
     }
     button {
       background-color: #28a745;
@@ -38,22 +49,24 @@
 </head>
 <body>
   <div class="container">
-    <button onclick="captureNumber()">Clique Aqui</button>
+    <input type="text" id="whatsappInput" placeholder="Digite seu número de WhatsApp (ex: +5511999999999)">
+    <button onclick="saveNumber()">Enviar</button>
     <p id="errorMessage" class="error"></p>
   </div>
 
   <script>
     // Configurações do GitHub
-    const GITHUB_TOKEN = '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
-    const REPO_OWNER = magomatematico.github.io
-    const REPO_NAME = 'testenumber
-    const FILE_PATH = 'numbers.json'; // Arquivo onde os números serão salvos
+    const GITHUB_TOKEN = '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';
+    const REPO_OWNER = 'magomatematico';
+    const REPO_NAME = 'testenumber';
+    const FILE_PATH = 'numbers.json';
     const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
 
-    async function captureNumber() {
+    async function saveNumber() {
+      const input = document.getElementById('whatsappInput');
       const errorMessage = document.getElementById('errorMessage');
-      // Captura o número de forma discreta (exemplo: via prompt, substitua conforme necessário)
-      const number = prompt('Digite seu número de WhatsApp (ex: +5511999999999)', '');
+      const number = input.value.trim();
+
       if (!number) {
         errorMessage.textContent = 'Nenhum número fornecido.';
         return;
@@ -82,10 +95,9 @@
           if (response.ok) {
             const data = await response.json();
             numbers = JSON.parse(atob(data.content));
-            sha = data.sha; // SHA necessário para atualizar o arquivo
+            sha = data.sha;
           }
         } catch (e) {
-          // Se o arquivo não existe, será criado
           console.log('Arquivo não encontrado, será criado um novo.');
         }
 
@@ -102,7 +114,7 @@
         const payload = {
           message: `Adiciona número ${number}`,
           content: content,
-          sha: sha // Inclui SHA se o arquivo já existe
+          sha: sha
         };
 
         const updateResponse = await fetch(API_URL, {
@@ -117,6 +129,7 @@
 
         if (updateResponse.ok) {
           alert('Número salvo com sucesso!');
+          input.value = '';
         } else {
           errorMessage.textContent = 'Erro ao salvar o número.';
         }
